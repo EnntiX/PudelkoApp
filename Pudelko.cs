@@ -1,7 +1,9 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
+using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
 using P = PudelkoLib.Pudelko;
@@ -15,14 +17,14 @@ namespace PudelkoLib
         centimeter,
         milimeter
     }
-    public sealed class Pudelko : IFormattable, IEquatable<Pudelko>
+    public sealed class Pudelko : IFormattable, IEquatable<Pudelko>, IEnumerable<double>
     {
         // Zmienne
         public UnitOfMeasure unit { get; set; }
         public readonly double a, b, c;
-        public double A => Math.Round(a, 3);
-        public double B => Math.Round(b, 3);
-        public double C => Math.Round(c, 3);
+        public double A => Math.Truncate(a * 1000) / 1000;
+        public double B => Math.Truncate(b * 1000) / 1000;
+        public double C => Math.Truncate(c * 1000) / 1000;
         //Konwert
         public double ConvertToM(double x, UnitOfMeasure unit)
         {
@@ -77,8 +79,8 @@ namespace PudelkoLib
             }
         }
         //Obliczenia
-        private double Objetosc => Math.Round(a * b * c, 9);
-        private double Pole => Math.Round(2 * ((a * b) + (a * c) + (b * c)), 6);
+        public double Objetosc => Math.Round(a * b * c, 1);
+        public double Pole => Math.Round(2 * a * b + 2 * a * c + 2 * b * c, 2);
         //Equals
         public bool Equals(Pudelko? obj)
         {
@@ -102,9 +104,9 @@ namespace PudelkoLib
         }
         //Przeciążenia
         public static bool operator ==(Pudelko left, Pudelko right)
-        {
-            return left.Equals(right);
-        }
+         {
+             return left.Equals(right);
+         }
         public static bool operator !=(Pudelko left, Pudelko right)
         {
             return !left.Equals(right);
@@ -114,12 +116,15 @@ namespace PudelkoLib
         {
             double[] checkValue1 = new[] { p1.a, p1.b, p1.c };
             double[] checkValue2 = new[] { p2.a, p2.b, p2.c };
-            Array.Sort(checkValue1, checkValue2);
-
-            double a = Math.Max(p1.a, p2.a);
-            double b = Math.Max(p1.b, p2.b);
-            return new Pudelko(a, b, p1.c + p2.c);
+                Array.Sort(checkValue1 , checkValue2);
+                Array.Reverse(checkValue1);
+                Array.Reverse(checkValue2);
+            double a = Math.Max(checkValue1[0], checkValue2[0]);
+            double b = Math.Max(checkValue1[1], checkValue2[1]);
+            Pudelko result = new Pudelko(a, b, checkValue1[2] + checkValue2[2]);
+            return result;
         }
+        //Explicit
         public static explicit operator double[](Pudelko l)
         {
             double[] tab = new double[3];
@@ -128,10 +133,57 @@ namespace PudelkoLib
             tab[2] = l.c;
             return tab;
         }
+        //Implicit
         public static implicit operator Pudelko(ValueTuple<int, int, int> numb)
         {
-            return new Pudelko(numb.Item1, numb.Item2, numb.Item3);
+            Pudelko result = new Pudelko(numb.Item1, numb.Item2, numb.Item3, UnitOfMeasure.milimeter);
+                return result;
         }
 
+        //Indekser
+        public double this[int indexer]
+        {
+            get
+            {
+                switch (indexer)
+                {
+                    case 0: return a;
+                    case 1: return b;
+                    case 2: return c;
+                    default: throw new IndexOutOfRangeException();
+                }
+            }
+        }
+        //Parsowanie
+        public static Pudelko Parse(string str)
+        {
+            // Sprawdzenie, czy podany łańcuch jest pusty
+            if (string.IsNullOrWhiteSpace(str))
+                 throw new ArgumentException("Unexpected format Pudelko.");
+            // Rozdzielenie wartości długości, szerokości i wysokości
+            string[] parts = str.Split(new char[] { '×' }, StringSplitOptions.RemoveEmptyEntries);
+            // Sprawdzenie, czy udało się rozdzielić wszystkie wartości
+            if (parts.Length != 3)
+                throw new ArgumentException("Unexpected format Pudelko.");
+            // Parsowanie wartości długości, szerokości i wysokości
+            if (!double.TryParse(parts[0].Trim(), out double length) || !double.TryParse(parts[1].Trim(), out double width) || !double.TryParse(parts[2].Trim(), out double height))
+            {
+                throw new ArgumentException("Unexpected format Pudelko.");
+            }
+            // Utworzenie i zwrócenie obiektu pudełka
+            return new Pudelko(length, width, height);
+        }
+
+        //Iterrator
+        public IEnumerator<double> GetEnumerator()
+        {
+            List<double> tab = new List<double>() { a, b, c };
+            return tab.GetEnumerator();
+        }
+
+        IEnumerator IEnumerable.GetEnumerator()
+        {
+            return GetEnumerator();
+        }
     }
 }
