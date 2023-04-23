@@ -116,7 +116,8 @@ namespace PudelkoLib
         {
             double[] checkValue1 = new[] { p1.a, p1.b, p1.c };
             double[] checkValue2 = new[] { p2.a, p2.b, p2.c };
-                Array.Sort(checkValue1 , checkValue2);
+                Array.Sort(checkValue1);
+                Array.Sort(checkValue2);
                 Array.Reverse(checkValue1);
                 Array.Reverse(checkValue2);
             double a = Math.Max(checkValue1[0], checkValue2[0]);
