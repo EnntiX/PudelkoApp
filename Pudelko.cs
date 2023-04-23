@@ -36,24 +36,24 @@ namespace PudelkoLib
         public Pudelko(double? a = null, double? b = null, double? c = null, UnitOfMeasure unit = UnitOfMeasure.meter)
         {
             this.a = a is null ? 0.1 : ConvertToM((double)a, unit);
-            this.b = b is null ? 0.1 : ConvertToM((double)b, unit);
-            this.c = c is null ? 0.1 : ConvertToM((double)c, unit);
-            this.unit = unit;
-
             if (this.a > 10)
                 throw new ArgumentOutOfRangeException(nameof(A));
             else if (this.a < 0.001)
                 throw new ArgumentOutOfRangeException(nameof(A));
 
+            this.b = b is null ? 0.1 : ConvertToM((double)b, unit);
             if (this.b > 10)
                 throw new ArgumentOutOfRangeException(nameof(B));
             else if (this.b < 0.001)
                 throw new ArgumentOutOfRangeException(nameof(B));
 
+            this.c = c is null ? 0.1 : ConvertToM((double)c, unit);
             if (this.c > 10)
                 throw new ArgumentOutOfRangeException(nameof(C));
             else if (this.c < 0.001)
                 throw new ArgumentOutOfRangeException(nameof(C));
+
+            this.unit = unit;
         }
         //To String 
         public override string ToString() { return this.ToString("m", CultureInfo.CurrentCulture); }
@@ -79,24 +79,37 @@ namespace PudelkoLib
             }
         }
         //Obliczenia
-        public double Objetosc => Math.Round(a * b * c, 1);
-        public double Pole => Math.Round(2 * a * b + 2 * a * c + 2 * b * c, 2);
+        public double Objetosc => Math.Round(a * b * c, 9);
+        public double Pole => Math.Round(2 * a * b + 2 * a * c + 2 * b * c, 6);
         //Equals
         public bool Equals(Pudelko? obj)
         {
-            if (obj is null) return false;
+            try
+            {
+                double a1 = a;
+                double b1 = b;
+                double c1 = c;
 
-            double[] checkValue1 = new[] { a, b, c };
-            double[] checkValue2 = new[] { obj.a, obj.b, obj.c };
-            Array.Sort(checkValue1, checkValue2);
-            if (a == obj.a && b == obj.b && c == obj.c) return true;
-            else return false;
+                double a2 = obj.A;
+                double b2 = obj.B;
+                double c2 = obj.C;
+
+                if (a1 == a2 || a1 == b2 || a1 == c2)
+                    if (b1 == b2 || b1 == c2 || b1 == a2)
+                        if (c1 == a2 || c1 == b2 || c1 == c2) return true;
+                return false;
+            }
+            catch (NullReferenceException x)
+            {
+                return false;
+            }
         }
         public override bool Equals(object? obj)
         {
             if (obj is null) return false;
-            else if (obj is not Pudelko[]) return false;
-            return Equals(obj);
+            Pudelko pudelkoObj = obj as Pudelko;
+            if (pudelkoObj is null) return false;
+            return Equals(pudelkoObj);
         }
         public override int GetHashCode()
         {
@@ -154,25 +167,6 @@ namespace PudelkoLib
                     default: throw new IndexOutOfRangeException();
                 }
             }
-        }
-        //Parsowanie
-        public static Pudelko Parse(string str)
-        {
-            // Sprawdzenie, czy podany łańcuch jest pusty
-            if (string.IsNullOrWhiteSpace(str))
-                 throw new ArgumentException("Unexpected format Pudelko.");
-            // Rozdzielenie wartości długości, szerokości i wysokości
-            string[] parts = str.Split(new char[] { '×' }, StringSplitOptions.RemoveEmptyEntries);
-            // Sprawdzenie, czy udało się rozdzielić wszystkie wartości
-            if (parts.Length != 3)
-                throw new ArgumentException("Unexpected format Pudelko.");
-            // Parsowanie wartości długości, szerokości i wysokości
-            if (!double.TryParse(parts[0].Trim(), out double length) || !double.TryParse(parts[1].Trim(), out double width) || !double.TryParse(parts[2].Trim(), out double height))
-            {
-                throw new ArgumentException("Unexpected format Pudelko.");
-            }
-            // Utworzenie i zwrócenie obiektu pudełka
-            return new Pudelko(length, width, height);
         }
 
         //Iterrator
